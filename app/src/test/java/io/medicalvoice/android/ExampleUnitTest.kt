@@ -1,4 +1,4 @@
-package io.shiryaev.medicalvoice
+package io.medicalvoice.android
 
 import org.junit.Test
 

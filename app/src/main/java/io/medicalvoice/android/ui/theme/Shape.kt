@@ -1,4 +1,4 @@
-package io.shiryaev.medicalvoice.ui.theme
+package io.medicalvoice.android.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

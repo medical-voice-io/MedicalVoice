@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'io.shiryaev.medicalvoice'
+    namespace 'io.medicalvoice.android'
     compileSdk 33
 
     defaultConfig {
-        applicationId "io.shiryaev.medicalvoice"
+        applicationId "io.medicalvoice.android"
         minSdk 21
         targetSdk 33
         versionCode 1
@@ -63,4 +63,7 @@ dependencies {
 
     /** Coroutines */
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation "androidx.compose.runtime:runtime-livedata:1.3.1"
+
+    implementation project(":medicalvoiceservice")
 }
