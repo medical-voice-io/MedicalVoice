@@ -13,4 +13,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "MedicalVoice"
-include ':app'
+include ':app',
+        ':medicalvoiceservice'
