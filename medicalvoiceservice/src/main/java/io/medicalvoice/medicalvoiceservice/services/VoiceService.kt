@@ -9,6 +9,7 @@ import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.extensions.createNotificationChannel
 import io.medicalvoice.medicalvoiceservice.services.extensions.startForeground
+import io.medicalvoice.medicalvoiceservice.services.extensions.stopForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,7 +47,7 @@ class VoiceService(
             audioRecorderInteractor.audioRecordingEventFlow
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                 .collect { event ->
-                    if (event is StopRecordingEvent) stopSelf()
+                    if (event is StopRecordingEvent) stopService()
                     _audioRecordingEventFlow.emit(event)
                 }
         }
@@ -86,9 +87,17 @@ class VoiceService(
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "$TAG onDestroy")
+
+        stopService()
         launch(coroutineContext) {
             audioRecorderInteractor.stopRecording()
         }
+
+    }
+
+    private fun stopService() {
+        stopForeground()
+        stopSelf()
     }
 
     private companion object {
