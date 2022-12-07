@@ -2,8 +2,6 @@ package io.medicalvoice.medicalvoiceservice.services
 
 import android.util.Log
 import io.medicalvoice.medicalvoiceservice.services.events.Event
-import io.medicalvoice.medicalvoiceservice.services.extensions.cancelChildrenAndJoin
-import io.medicalvoice.medicalvoiceservice.services.extensions.contextJob
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,12 +39,9 @@ class AudioRecorderInteractor(
         }
     }
 
-    private val hasRunningJob: Boolean
-        get() = contextJob.children.any(Job::isActive)
-
     /** Старт запись аудио */
     suspend fun startRecording() {
-        chancelRunningJob()
+        stopRecording()
         withContext(coroutineContext) {
 
             Log.i(
@@ -61,10 +56,5 @@ class AudioRecorderInteractor(
     suspend fun stopRecording() {
         Log.i(AudioRecorder.TAG, "(${this::class.simpleName}) Stop recording")
         audioRecorderRepository.stopRecording()
-    }
-
-    /** Отмена корутины для остановки записи аудио */
-    private suspend fun chancelRunningJob() = withContext(coroutineContext) {
-        if (hasRunningJob) contextJob.cancelChildrenAndJoin()
     }
 }
