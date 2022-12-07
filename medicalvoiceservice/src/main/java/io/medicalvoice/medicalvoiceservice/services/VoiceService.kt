@@ -85,14 +85,13 @@ class VoiceService(
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         Log.i(TAG, "$TAG onDestroy")
 
-        stopService()
         launch(coroutineContext) {
             audioRecorderInteractor.stopRecording()
         }
-
+        stopService()
+        super.onDestroy()
     }
 
     private fun stopService() {
