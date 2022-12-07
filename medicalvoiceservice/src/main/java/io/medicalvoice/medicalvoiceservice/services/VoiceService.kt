@@ -1,20 +1,14 @@
 package io.medicalvoice.medicalvoiceservice.services
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.content.getSystemService
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
+import io.medicalvoice.medicalvoiceservice.services.extensions.createNotificationChannel
+import io.medicalvoice.medicalvoiceservice.services.extensions.startForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +19,11 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Сервис для записи аудио из микрофона в фоновом режиме
+ *
+ * @property audioRecorderInteractor usercase старта/остановки записи аудио
+ */
 class VoiceService(
     private val audioRecorderInteractor: AudioRecorderInteractor = AudioRecorderInteractor(
         audioRecorderRepository = AudioRecorderRepository()
@@ -57,27 +56,7 @@ class VoiceService(
         Log.i(TAG, "$TAG onStartCommand")
 
         createNotificationChannel()
-
-        val notificationIntent = Intent(
-            this,
-            Class.forName(APP_PACKAGE_NAME)
-        )
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
-        )
-        val notification = NotificationCompat.Builder(this, VOICE_NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Запись звука в приложении MedicalVoice")
-            .setContentText("Текст уведомления")
-            .setContentIntent(pendingIntent)
-            .build()
-        startForeground(1, notification)
+        startForeground()
 
         launch(coroutineContext) {
             audioRecorderInteractor.startRecording()
@@ -112,51 +91,7 @@ class VoiceService(
         }
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                VOICE_NOTIFICATION_CHANNEL_ID,
-                "Foreground MedicalVoiceService Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            // val serviceChannel = NotificationChannelCompat.Builder(
-            //     VOICE_NOTIFICATION_CHANNEL_ID,
-            //     NotificationManagerCompat.IMPORTANCE_DEFAULT
-            // ).build()
-            getSystemService<NotificationManager>()?.createNotificationChannel(serviceChannel)
-        }
-    }
-
-    companion object {
+    private companion object {
         const val TAG = "MedicalVoiceService"
-        private val APP_PACKAGE_NAME = "io.medicalvoice.android.MainActivity"
-        private const val VOICE_NOTIFICATION_CHANNEL_ID = "VOICE_NOTIFICATION_CHANNEL_ID"
-
-        fun startService(context: Context) {
-            val intent = Intent(context, VoiceService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
-        }
-
-        fun stopService(context: Context) {
-            val intent = Intent(context, VoiceService::class.java)
-            context.stopService(intent)
-        }
-
-        fun bindService(context: Context, connection: ServiceConnection) {
-            val intent = Intent(context, VoiceService::class.java)
-            context.bindService(
-                intent,
-                connection,
-                0 // TODO: Context.BIND_AUTO_START
-            )
-        }
-
-        fun unbindService(context: Context, connection: ServiceConnection) {
-            context.unbindService(connection)
-        }
     }
 }

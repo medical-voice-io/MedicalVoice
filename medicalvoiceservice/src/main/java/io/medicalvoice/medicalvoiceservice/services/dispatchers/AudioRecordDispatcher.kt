@@ -6,6 +6,7 @@ import java.util.concurrent.Executors
 
 private const val AUDIO_RECORD_THREAD = "AudioRecord thread"
 
+/** Диспатчер корутины для записи аудио */
 private val dispatcher = Executors.newSingleThreadExecutor { runnable ->
     object : Thread(runnable, AUDIO_RECORD_THREAD) {
         init {

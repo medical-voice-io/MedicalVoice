@@ -11,12 +11,16 @@ import io.medicalvoice.medicalvoiceservice.services.VoiceService
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
+import io.medicalvoice.medicalvoiceservice.services.extensions.bindService
+import io.medicalvoice.medicalvoiceservice.services.extensions.startService
+import io.medicalvoice.medicalvoiceservice.services.extensions.stopService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
+/** ViewModel экрана управления сервисом */
 class VoiceViewModel(
     application: Application
 ) : AndroidViewModel(application), CoroutineScope by MainScope() {
@@ -47,26 +51,20 @@ class VoiceViewModel(
     }
 
     fun startService() = with(getApplication<Application>().applicationContext) {
-        VoiceService.startService(this)
+        startService<VoiceService>()
     }
 
     fun stopService() = with(getApplication<Application>().applicationContext) {
-        VoiceService.stopService(this)
+        stopService<VoiceService>()
     }
 
-    fun bindService() {
-        VoiceService.bindService(
-            getApplication<Application>().applicationContext,
-            serviceConnection
-        )
+    fun bindService() = with(getApplication<Application>().applicationContext) {
+        bindService<VoiceService>(serviceConnection)
     }
 
-    fun unbindService() {
+    fun unbindService() = with(getApplication<Application>().applicationContext) {
         if (_isServiceRunning.value != true) return
-        VoiceService.unbindService(
-            getApplication<Application>().applicationContext,
-            serviceConnection
-        )
+        unbindService(serviceConnection)
         _isServiceRunning.value = false
     }
 }

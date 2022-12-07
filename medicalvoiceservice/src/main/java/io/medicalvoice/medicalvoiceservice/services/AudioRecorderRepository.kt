@@ -1,15 +1,22 @@
 package io.medicalvoice.medicalvoiceservice.services
 
 import android.util.Log
-import io.medicalvoice.medicalvoiceservice.services.AudioRecorder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Репозиторий, который работает с [AudioRecorder]
+ *
+ * @property audioRecorder класс, который работает с AudioRecord
+ */
 class AudioRecorderRepository(
     private val audioRecorder: AudioRecorder = AudioRecorder()
 ) : CoroutineScope {
@@ -34,6 +41,7 @@ class AudioRecorderRepository(
         }
     }
 
+    /** Запускает запись аудио */
     suspend fun startRecording() = withContext(coroutineContext) {
 
         Log.i(
@@ -44,11 +52,12 @@ class AudioRecorderRepository(
         audioRecorder.startRecording()
     }
 
+    /** Останавливает запись аудио */
     suspend fun stopRecording() {
 
         Log.i(
             AudioRecorder.TAG,
-            "(${this@AudioRecorderRepository::class.simpleName}) Start recording"
+            "(${this@AudioRecorderRepository::class.simpleName}) Stop recording"
         )
 
         audioRecorder.stopAudioRecording()

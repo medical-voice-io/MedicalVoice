@@ -17,6 +17,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Класс для работы с AudioRecord.
+ * Может запускать и останавливать запись аудио с микрофона
+ */
 class AudioRecorder : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
@@ -28,6 +32,7 @@ class AudioRecorder : CoroutineScope {
     private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
     val audioRecordingEventFlow = _audioRecordingEventFlow.asSharedFlow()
 
+    /** Запуск корутины, которая записывает аудио с микрофона */
     suspend fun startRecording() = withContext(coroutineContext) {
         lateinit var audioRecorder: AudioRecord
 
@@ -84,6 +89,7 @@ class AudioRecorder : CoroutineScope {
         }
     }
 
+    /** Останавливает корутину записи аудио */
     suspend fun stopAudioRecording() {
 
         Log.i(TAG, "(${this@AudioRecorder::class.simpleName}) Stop recording")
@@ -91,6 +97,7 @@ class AudioRecorder : CoroutineScope {
         coroutineContext.cancelChildrenAndJoin()
     }
 
+    /** Создает инстанс AudioRecord */
     @SuppressLint("MissingPermission")
     private fun createRecorder(): AudioRecord {
         SAMPLE_RATES.forEach { sampleRate ->

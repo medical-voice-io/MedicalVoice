@@ -1,7 +1,6 @@
 package io.medicalvoice.android
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,7 +15,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.core.app.ActivityCompat
+import io.medicalvoice.android.extensions.checkAudioPermission
 import io.medicalvoice.android.factory.MedicalViewModelFactory
 import io.medicalvoice.android.ui.theme.MedicalVoiceTheme
 
@@ -28,7 +27,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        checkPermission() // TODO: проверка permission
+
+        checkAudioPermission(setOf(Manifest.permission.RECORD_AUDIO))
+
         setContent {
             MedicalVoiceTheme {
                 // A surface container using the 'background' color from the theme
@@ -52,26 +53,6 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         viewModel.unbindService()
         super.onStop()
-    }
-
-    private fun checkPermission() {
-        val permission = Manifest.permission.RECORD_AUDIO
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            ActivityCompat.requestPermissions(
-                this,
-                setOf(permission).toTypedArray(),
-                200
-            )
-        }
     }
 }
 

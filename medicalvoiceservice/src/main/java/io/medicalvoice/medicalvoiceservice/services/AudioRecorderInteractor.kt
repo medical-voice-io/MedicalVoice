@@ -5,9 +5,17 @@ import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.extensions.cancelChildrenAndJoin
 import io.medicalvoice.medicalvoiceservice.services.extensions.contextJob
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * UseCase прослушивания AudioRecord
+ *
+ * @property audioRecorderRepository репозиторий, который управляет рекордером звука
+ */
 class AudioRecorderInteractor(
     private val audioRecorderRepository: AudioRecorderRepository
 ) : CoroutineScope {
@@ -36,6 +44,7 @@ class AudioRecorderInteractor(
     private val hasRunningJob: Boolean
         get() = contextJob.children.any(Job::isActive)
 
+    /** Старт запись аудио */
     suspend fun startRecording() {
         chancelRunningJob()
         withContext(coroutineContext) {
@@ -48,11 +57,13 @@ class AudioRecorderInteractor(
         }
     }
 
+    /** Остановка записи аудио */
     suspend fun stopRecording() {
         Log.i(AudioRecorder.TAG, "(${this::class.simpleName}) Stop recording")
         audioRecorderRepository.stopRecording()
     }
 
+    /** Отмена корутины для остановки записи аудио */
     private suspend fun chancelRunningJob() = withContext(coroutineContext) {
         if (hasRunningJob) contextJob.cancelChildrenAndJoin()
     }
