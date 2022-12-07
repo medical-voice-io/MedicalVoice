@@ -7,8 +7,7 @@ import android.util.Log
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
-import io.medicalvoice.medicalvoiceservice.services.extensions.createNotificationChannel
-import io.medicalvoice.medicalvoiceservice.services.extensions.startForeground
+import io.medicalvoice.medicalvoiceservice.services.extensions.startForegroundAndShowNotification
 import io.medicalvoice.medicalvoiceservice.services.extensions.stopForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,8 +55,7 @@ class VoiceService(
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.i(TAG, "$TAG onStartCommand")
 
-        createNotificationChannel()
-        startForeground()
+        startForegroundAndShowNotification()
 
         launch(coroutineContext) {
             audioRecorderInteractor.startRecording()
