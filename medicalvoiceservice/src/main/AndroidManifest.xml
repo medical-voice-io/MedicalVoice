@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application>
+        <service
+            android:name=".services.VoiceService"
+            android:exported="false"
+            android:enabled="true"
+            android:foregroundServiceType="microphone">
+
+<!--            <intent-filter>-->
+<!--                <action android:name="io.medicalvoice.medicalvoiceservice.services.VoiceService" />-->
+<!--            </intent-filter>-->
+        </service>
+    </application>
+</manifest>
