@@ -41,7 +41,6 @@ class AudioRecorderInteractor(
 
     /** Старт запись аудио */
     suspend fun startRecording() {
-        stopRecording()
         withContext(coroutineContext) {
 
             Log.i(
