@@ -4,21 +4,20 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import io.medicalvoice.medicalvoiceservice.R
-
-private const val VOICE_NOTIFICATION_CHANNEL_ID = "VOICE_NOTIFICATION_CHANNEL_ID"
-private const val APP_PACKAGE_NAME = "io.medicalvoice.android.MainActivity"
+import io.medicalvoice.medicalvoiceservice.domain.NotificationData
 
 /** Создает канал для уведомления */
-fun NotificationManager.createNotificationChannel() {
+fun NotificationManager.createNotificationChannel(
+    channelId: String,
+    channelName: String
+) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val serviceChannel = NotificationChannel(
-            VOICE_NOTIFICATION_CHANNEL_ID,
-            "Foreground MedicalVoiceService Channel",
+            channelId,
+            channelName,
             NotificationManager.IMPORTANCE_DEFAULT
         )
         createNotificationChannel(serviceChannel)
@@ -26,10 +25,14 @@ fun NotificationManager.createNotificationChannel() {
 }
 
 /** Запускает уведомление и привязывает сервис к foreground */
-fun Service.startForeground(notificationManager: NotificationManager) {
+fun Service.startForeground(
+    notificationManager: NotificationManager,
+    notificationData: NotificationData,
+    appPackageName: String
+) {
     val notificationIntent = Intent(
         this,
-        Class.forName(APP_PACKAGE_NAME)
+        Class.forName(appPackageName)
     )
     val pendingIntent = PendingIntent.getActivity(
         this,
@@ -41,27 +44,21 @@ fun Service.startForeground(notificationManager: NotificationManager) {
             PendingIntent.FLAG_UPDATE_CURRENT
         }
     )
-    val notification = NotificationCompat.Builder(this, VOICE_NOTIFICATION_CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_android)
-        .setContentTitle("Запись звука в приложении MedicalVoice")
-        .setContentText("Текст уведомления")
+    val notification = NotificationCompat.Builder(this, notificationData.channelId)
+        .setSmallIcon(notificationData.smallIconRes)
+        .setContentTitle(notificationData.title)
+        .setContentText(notificationData.text)
         .setContentIntent(pendingIntent)
         .build()
     startForeground(1, notification)
     notificationManager.notify(0, notification)
 }
 
-fun Service.startForegroundAndShowNotification() {
-    val notificationManager = (getSystemService(
-        Context.NOTIFICATION_SERVICE
-    ) as NotificationManager).apply { createNotificationChannel() }
-    startForeground(notificationManager)
-}
-
-fun Service.stopForeground() {
+fun Service.stopForeground(notificationManager: NotificationManager) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        stopForeground(Service.STOP_FOREGROUND_DETACH)
+        stopForeground(Service.STOP_FOREGROUND_REMOVE)
     } else {
         stopForeground(false)
     }
+    notificationManager.cancelAll()
 }
