@@ -94,7 +94,7 @@ class AudioRecorder : CoroutineScope {
 
         Log.i(TAG, "(${this@AudioRecorder::class.simpleName}) Stop recording")
 
-        coroutineContext.cancelChildrenAndJoin()
+        coroutineContext.job.cancelAndJoin()
     }
 
     /** Создает инстанс AudioRecord */
