@@ -9,7 +9,6 @@ import io.medicalvoice.medicalvoiceservice.services.dispatchers.AudioRecordDispa
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
-import io.medicalvoice.medicalvoiceservice.services.extensions.cancelChildrenAndJoin
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -79,13 +78,10 @@ class AudioRecorder : CoroutineScope {
             currentCoroutineContext().cancel()
             Log.e(TAG, "Uncaught AudioRecord exception", error)
         } finally {
+            Log.i(TAG, "finally")
+            audioRecorder.stop()
+            audioRecorder.release()
             _audioRecordingEventFlow.emit(StopRecordingEvent())
-            withContext(NonCancellable) {
-                audioRecorder.stop()
-                audioRecorder.release()
-                Log.i(TAG, "Recording finished")
-                currentCoroutineContext().cancel()
-            }
         }
     }
 
