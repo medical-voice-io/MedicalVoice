@@ -79,10 +79,12 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
             currentCoroutineContext().cancel()
             Log.e(TAG, "Uncaught AudioRecord exception", error)
         } finally {
-            Log.i(TAG, "finally")
-            audioRecorder.stop()
-            audioRecorder.release()
-            _audioRecordingEventFlow.emit(StopRecordingEvent())
+            withContext(NonCancellable) {
+                Log.i(TAG, "finally")
+                audioRecorder.stop()
+                audioRecorder.release()
+                _audioRecordingEventFlow.emit(StopRecordingEvent())
+            }
         }
     }
 
