@@ -3,6 +3,7 @@ package io.medicalvoice.medicalvoiceservice.services
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import dagger.hilt.android.AndroidEntryPoint
 import io.medicalvoice.medicalvoiceservice.R
 import io.medicalvoice.medicalvoiceservice.domain.NotificationData
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
@@ -13,17 +14,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-/**
- * Сервис для записи аудио из микрофона в фоновом режиме
- *
- * @property audioRecorderInteractor usercase старта/остановки записи аудио
- */
-class VoiceService(
-    private val audioRecorderInteractor: AudioRecorderInteractor = AudioRecorderInteractor(
-        audioRecorderRepository = AudioRecorderRepository()
-    )
-) : BaseNotificationService() {
+/** Сервис для записи аудио из микрофона в фоновом режиме */
+@AndroidEntryPoint
+class VoiceService : BaseNotificationService() {
+
+    @Inject
+    lateinit var audioRecorderInteractor: AudioRecorderInteractor
 
     override val appPackageName: String = APP_PACKAGE_NAME
     override val notificationData: NotificationData by lazy {
@@ -32,13 +30,14 @@ class VoiceService(
             channelName = VOICE_NOTIFICATION_CHANNEL_NAME,
             title = resources.getString(R.string.notification_title),
             text = resources.getString(R.string.notification_text),
-            smallIconRes = R.drawable.ic_android
+            smallIconRes = R.drawable.ic_mic
         )
     }
 
     private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
 
-    init {
+    override fun onCreate() {
+        super.onCreate()
         launch {
             audioRecorderInteractor.audioBufferFlow
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)

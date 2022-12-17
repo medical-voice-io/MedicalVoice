@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -17,8 +18,8 @@ import kotlin.coroutines.CoroutineContext
  *
  * @property audioRecorder класс, который работает с AudioRecord
  */
-class AudioRecorderRepository(
-    private val audioRecorder: AudioRecorder = AudioRecorder()
+class AudioRecorderRepository @Inject constructor(
+    private val audioRecorder: AudioRecorder
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.IO
 

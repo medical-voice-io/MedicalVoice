@@ -14,13 +14,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.IOException
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 /**
  * Класс для работы с AudioRecord.
  * Может запускать и останавливать запись аудио с микрофона
  */
-class AudioRecorder : CoroutineScope {
+class AudioRecorder @Inject constructor() : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
     private var bufferSize: Int = 0

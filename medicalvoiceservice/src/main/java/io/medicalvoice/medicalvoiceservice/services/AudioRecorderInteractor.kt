@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.shareIn
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -14,7 +15,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @property audioRecorderRepository репозиторий, который управляет рекордером звука
  */
-class AudioRecorderInteractor(
+class AudioRecorderInteractor @Inject constructor(
     private val audioRecorderRepository: AudioRecorderRepository
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext =
