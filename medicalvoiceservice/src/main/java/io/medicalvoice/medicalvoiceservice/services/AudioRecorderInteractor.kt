@@ -19,7 +19,7 @@ class AudioRecorderInteractor @Inject constructor(
     private val audioRecorderRepository: AudioRecorderRepository
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext =
-        Dispatchers.IO + SupervisorJob() + CoroutineName("AudioRecorderInteractor")
+        Dispatchers.IO + Job() + CoroutineName("AudioRecorderInteractor")
 
     private val _audioBufferFlow = MutableSharedFlow<ShortArray>()
     val audioBufferFlow = _audioBufferFlow.asSharedFlow()
