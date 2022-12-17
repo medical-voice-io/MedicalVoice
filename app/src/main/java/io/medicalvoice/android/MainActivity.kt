@@ -15,15 +15,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import dagger.hilt.android.AndroidEntryPoint
 import io.medicalvoice.android.extensions.checkAudioPermission
-import io.medicalvoice.android.factory.MedicalViewModelFactory
 import io.medicalvoice.android.ui.theme.MedicalVoiceTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<VoiceViewModel> {
-        MedicalViewModelFactory(application)
-    }
+    private val viewModel: VoiceViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
