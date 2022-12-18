@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import io.medicalvoice.medicalvoiceservice.logger.FileLogger
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
@@ -12,10 +13,7 @@ import io.medicalvoice.medicalvoiceservice.services.extensions.stopForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -34,10 +32,17 @@ class VoiceService(
 
     private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
 
+    // Массив куда будем собирать записанные с микрофона данные
+    private val soundArray: ArrayList<Short> = arrayListOf()
+
     init {
         launch {
             audioRecorderInteractor.audioBufferFlow
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
+                // При каждом полученном значении кладем в массив
+                .onEach {
+                    soundArray.addAll(it.toList())
+                }
                 .collect { buffer ->
                     Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
                 }
@@ -74,6 +79,10 @@ class VoiceService(
 
     override fun onUnbind(intent: Intent?): Boolean {
         Log.i(TAG, "$TAG onUnbind")
+        // Записываем полученнеы данные с микрофона в файл
+        FileLogger.saveLog("WRITE_SOUND", soundArray.toString()
+            .replace("[", ""),
+            null)
         return false
     }
 
