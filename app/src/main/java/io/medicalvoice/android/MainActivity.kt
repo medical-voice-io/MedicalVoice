@@ -21,7 +21,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.medicalvoice.android.app.MedicalVoiceApplication
 import io.medicalvoice.android.extensions.checkAudioPermission
 import io.medicalvoice.android.extensions.checkStoragePermission
-import io.medicalvoice.android.factory.MedicalViewModelFactory
 
 import io.medicalvoice.android.ui.theme.MedicalVoiceTheme
 
