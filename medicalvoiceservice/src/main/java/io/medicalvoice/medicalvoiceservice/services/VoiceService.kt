@@ -35,6 +35,7 @@ class VoiceService : BaseNotificationService() {
     private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
 
     // Массив куда будем собирать записанные с микрофона данные
+    // TODO: не хранить данные в массиве, а записывать сразу
     private val soundArray: ArrayList<Short> = arrayListOf()
 
     override fun onCreate() {
@@ -43,11 +44,10 @@ class VoiceService : BaseNotificationService() {
             audioRecorderInteractor.audioBufferFlow
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                 // При каждом полученном значении кладем в массив
-                .onEach {
-                    soundArray.addAll(it.toList())
-                }
                 .collect { buffer ->
                     Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
+                    // TODO: записывать сразу в файл
+                    soundArray.addAll(buffer.toList())
                 }
         }
         launch {

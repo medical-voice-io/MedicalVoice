@@ -43,17 +43,17 @@ object FileLogger {
     }
 
 
-    fun saveLog(tag: String, event: String, t: Throwable?) {
-        if (t == null) {
+    fun saveLog(tag: String, event: String, throwableValue: Throwable?) {
+        if (throwableValue == null) {
             Log.v(tag, event)
         } else {
-            Log.e(tag, event, t)
+            Log.e(tag, event, throwableValue)
         }
 
         val currentMilliseconds = System.currentTimeMillis()
         val resultDate = Date(currentMilliseconds)
         val fileName = "med${sdfTime.format(resultDate)}.txt"
-        writeLogToFile(fileName, event, t)
+        writeLogToFile(fileName, event, throwableValue)
     }
 
     private fun writeLogToFile(fileName: String, note: String, throwable: Throwable?) {
@@ -66,9 +66,9 @@ object FileLogger {
             Log.i("File", fileName)
             if (createDirIfNotExists("MedicalVoice")) {
                 val fileLogsDirectory = File(directory, fileName)
-                withContext(Dispatchers.IO) {
+ //               withContext(Dispatchers.IO) {
                     fileLogsDirectory.createNewFile()
-                }
+//                }
                 val logToSave = note
                 logMessageActor.send(FileLogMessage(logToSave, fileLogsDirectory, throwable))
            }
