@@ -7,6 +7,7 @@ import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.medicalvoice.medicalvoiceservice.services.VoiceService
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
@@ -19,9 +20,11 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /** ViewModel экрана управления сервисом */
-class VoiceViewModel(
+@HiltViewModel
+class VoiceViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application), CoroutineScope by MainScope() {
 

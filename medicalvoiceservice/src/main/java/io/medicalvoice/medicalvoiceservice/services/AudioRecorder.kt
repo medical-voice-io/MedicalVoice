@@ -9,19 +9,19 @@ import io.medicalvoice.medicalvoiceservice.services.dispatchers.AudioRecordDispa
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
-import io.medicalvoice.medicalvoiceservice.services.extensions.cancelChildrenAndJoin
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.IOException
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 /**
  * Класс для работы с AudioRecord.
  * Может запускать и останавливать запись аудио с микрофона
  */
-class AudioRecorder : CoroutineScope {
+class AudioRecorder @Inject constructor() : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
     private var bufferSize: Int = 0
@@ -79,12 +79,11 @@ class AudioRecorder : CoroutineScope {
             currentCoroutineContext().cancel()
             Log.e(TAG, "Uncaught AudioRecord exception", error)
         } finally {
-            _audioRecordingEventFlow.emit(StopRecordingEvent())
             withContext(NonCancellable) {
+                Log.i(TAG, "finally")
                 audioRecorder.stop()
                 audioRecorder.release()
-                Log.i(TAG, "Recording finished")
-                currentCoroutineContext().cancel()
+                _audioRecordingEventFlow.emit(StopRecordingEvent())
             }
         }
     }
@@ -94,7 +93,7 @@ class AudioRecorder : CoroutineScope {
 
         Log.i(TAG, "(${this@AudioRecorder::class.simpleName}) Stop recording")
 
-        coroutineContext.cancelChildrenAndJoin()
+        coroutineContext.job.cancelAndJoin()
     }
 
     /** Создает инстанс AudioRecord */
