@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import dagger.hilt.android.AndroidEntryPoint
 import io.medicalvoice.android.app.MedicalVoiceApplication
 import io.medicalvoice.android.extensions.checkAudioPermission
+import io.medicalvoice.android.extensions.checkStoragePermission
 import io.medicalvoice.android.ui.theme.MedicalVoiceTheme
 
 @AndroidEntryPoint
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         checkAudioPermission(setOf(Manifest.permission.RECORD_AUDIO))
+        checkStoragePermission(setOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         setContent {
             MedicalVoiceTheme {
