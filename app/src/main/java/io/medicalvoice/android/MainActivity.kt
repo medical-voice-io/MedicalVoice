@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import io.medicalvoice.android.extensions.checkAudioPermission
+import io.medicalvoice.android.extensions.checkStoragePermission
 import io.medicalvoice.android.factory.MedicalViewModelFactory
 import io.medicalvoice.android.ui.theme.MedicalVoiceTheme
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         checkAudioPermission(setOf(Manifest.permission.RECORD_AUDIO))
+        checkStoragePermission(setOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         setContent {
             MedicalVoiceTheme {
