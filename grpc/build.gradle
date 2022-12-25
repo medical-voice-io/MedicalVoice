@@ -13,29 +13,30 @@ protobuf {
     protoc { artifact = "com.google.protobuf:protoc:3.21.12" }
 
     plugins {
-        kroto {
-            if (osdetector.os == "osx") {
-                artifact = "com.github.marcoferrer.krotoplus:protoc-gen-kroto-plus:0.6.1:osx-x86_64"
-            } else {
-                artifact = "com.github.marcoferrer.krotoplus:protoc-gen-kroto-plus:0.6.1"
-            }
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.51.1"
+        }
+        grpckt {
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.3.0:jdk8@jar"
         }
     }
-
     generateProtoTasks {
-        def krotoConfig = file("krotoPlusConfig.yaml") // Or .json, .yaml, .yml
-
-        all().each { task ->
-            // Adding the config file to the task inputs lets UP-TO-DATE checks
-            // include changes to configuration
-            task.inputs.files krotoConfig
-
-            task.plugins {
-                kroto {
-                    outputSubDir = "java"
-                    option "ConfigPath=$krotoConfig"
-                }
+        all().forEach {
+            it.plugins {
+                grpc
+                grpckt
+            }
+            it.builtins {
+                kotlin
             }
         }
     }
+}
+
+dependencies {
+    implementation "io.grpc:grpc-kotlin-stub:1.3.0"
+    implementation "io.grpc:grpc-protobuf:1.51.1"
+    implementation "com.google.protobuf:protobuf-kotlin:3.21.12"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
 }
