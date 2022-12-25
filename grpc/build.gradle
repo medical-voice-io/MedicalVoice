@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm'
+    id 'com.google.protobuf'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:3.21.12" }
+
+    plugins {
+        kroto {
+            if (osdetector.os == "osx") {
+                artifact = "com.github.marcoferrer.krotoplus:protoc-gen-kroto-plus:0.6.1:osx-x86_64"
+            } else {
+                artifact = "com.github.marcoferrer.krotoplus:protoc-gen-kroto-plus:0.6.1"
+            }
+        }
+    }
+
+    generateProtoTasks {
+        def krotoConfig = file("krotoPlusConfig.yaml") // Or .json, .yaml, .yml
+
+        all().each { task ->
+            // Adding the config file to the task inputs lets UP-TO-DATE checks
+            // include changes to configuration
+            task.inputs.files krotoConfig
+
+            task.plugins {
+                kroto {
+                    outputSubDir = "java"
+                    option "ConfigPath=$krotoConfig"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package io.medicalvoice.grpc.proto;
+
+option java_multiple_files = true;
+option java_package = "io.medicalvoice.grpc.proto";
+option java_outer_classname = "MedicalVoiceApiProto";
+
+message VoiceRequest {
+  bytes data = 1;
+}
+
+message Empty {}
+
+service MedicalVoiceApi {
+  rpc SendVoiceData(stream VoiceRequest) returns (Empty);
+}
