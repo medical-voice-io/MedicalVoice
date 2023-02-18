@@ -1,14 +1,15 @@
 package io.medicalvoice.medicalvoiceservice.services
 
 import android.annotation.SuppressLint
-import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
 import io.medicalvoice.medicalvoiceservice.services.dispatchers.AudioRecordDispatcher
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
+import io.medicalvoice.medicalvoiceservice.services.exceptions.CreateAudioRecordException
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -33,20 +34,17 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
     val audioRecordingEventFlow = _audioRecordingEventFlow.asSharedFlow()
 
     /** Запуск корутины, которая записывает аудио с микрофона */
-    suspend fun startRecording() = withContext(coroutineContext) {
+    suspend fun startRecording(
+        audioRecorderConfig: AudioRecorderConfig
+    ) = withContext(coroutineContext) {
         lateinit var audioRecorder: AudioRecord
 
         try {
             Log.i(TAG, "Start recording")
 
             val countAttempts = 5
-            retry(countAttempts, delay = 300) { attempt ->
-                audioRecorder = createRecorder()
-                if (audioRecorder.state != AudioRecord.STATE_INITIALIZED) {
-                    Log.e(TAG, "Failed to init AudioRecord, attempt: $attempt")
-                    audioRecorder.release()
-                    throw IOException("Failed to init AudioRecord after $countAttempts retries")
-                }
+            retry(countAttempts, delay = 300) {
+                audioRecorder = createRecorder(audioRecorderConfig)
 
                 audioRecorder.startRecording()
 
@@ -98,56 +96,34 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
 
     /** Создает инстанс AudioRecord */
     @SuppressLint("MissingPermission")
-    private fun createRecorder(): AudioRecord {
-        SAMPLE_RATES.forEach { sampleRate ->
-            AUDIO_FORMATS.forEach { audioFormat ->
-                CHANNEL_CONFIGS.forEach { channelConfig ->
-                    bufferSize = AudioRecord.getMinBufferSize(
-                        sampleRate,
-                        channelConfig,
-                        audioFormat
-                    )
-
-                    if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-                        val recorder = AudioRecord(
-                            MediaRecorder.AudioSource.MIC,
-                            sampleRate,
-                            channelConfig,
-                            audioFormat,
-                            bufferSize
-                        )
-
-                        if (recorder.state == AudioRecord.STATE_INITIALIZED) {
-                            return recorder
-                        } else {
-                            recorder.release()
-                        }
-                    }
-                }
+    fun createRecorder(audioRecorderConfig: AudioRecorderConfig): AudioRecord {
+        bufferSize = with(audioRecorderConfig) {
+            AudioRecord.getMinBufferSize(
+                sampleRate.value,
+                channelConfig.value,
+                audioFormat.value
+            )
+        }
+        if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
+            val recorder = with(audioRecorderConfig) {
+                AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate.value,
+                    channelConfig.value,
+                    audioFormat.value,
+                    bufferSize
+                )
+            }
+            if (recorder.state == AudioRecord.STATE_INITIALIZED) {
+                return recorder
+            } else {
+                recorder.release()
             }
         }
-        throw IOException("Не удалось создать AudioRecord")
+        throw CreateAudioRecordException()
     }
 
     companion object {
         const val TAG = "MY_TAG"
-
-        val SAMPLE_RATES = setOf(
-            44100,
-            22050,
-            16000,
-            11025,
-            8000
-        )
-        val AUDIO_FORMATS = setOf(
-            AudioFormat.ENCODING_PCM_16BIT,
-            AudioFormat.ENCODING_PCM_FLOAT,
-            AudioFormat.ENCODING_PCM_8BIT,
-            AudioFormat.ENCODING_DEFAULT
-        )
-        val CHANNEL_CONFIGS = setOf(
-            AudioFormat.CHANNEL_IN_STEREO,
-            AudioFormat.CHANNEL_IN_MONO
-        )
     }
 }

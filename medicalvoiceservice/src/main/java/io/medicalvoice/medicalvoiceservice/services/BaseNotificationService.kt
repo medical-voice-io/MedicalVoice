@@ -27,7 +27,7 @@ abstract class BaseNotificationService : Service(), CoroutineScope {
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         notificationManager.createNotificationChannel(
             channelId = notificationData.channelId,
             channelName = notificationData.channelName

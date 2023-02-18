@@ -5,10 +5,12 @@ import android.os.IBinder
 import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import io.medicalvoice.medicalvoiceservice.R
+import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
 import io.medicalvoice.medicalvoiceservice.domain.NotificationData
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
+import io.medicalvoice.medicalvoiceservice.services.extensions.getSerializable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
@@ -55,13 +57,15 @@ class VoiceService : BaseNotificationService() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
         Log.i(TAG, "$TAG onStartCommand")
 
+        val audioRecorderConfig = intent.getSerializable<AudioRecorderConfig>(CONFIG_KEY)
+
         launch(coroutineContext) {
-            audioRecorderInteractor.startRecording()
+            audioRecorderInteractor.startRecording(audioRecorderConfig)
             stopSelf()
         }
         return START_STICKY
@@ -94,10 +98,12 @@ class VoiceService : BaseNotificationService() {
         super.onDestroy()
     }
 
-    private companion object {
-        const val TAG = "MedicalVoiceService"
-        const val VOICE_NOTIFICATION_CHANNEL_ID = "VOICE_NOTIFICATION_CHANNEL_ID"
-        const val VOICE_NOTIFICATION_CHANNEL_NAME = "Foreground MedicalVoice Service"
-        const val APP_PACKAGE_NAME = "io.medicalvoice.android.MainActivity"
+    companion object {
+        const val CONFIG_KEY = "AudioRecorderConfig"
+
+        private const val TAG = "MedicalVoiceService"
+        private const val VOICE_NOTIFICATION_CHANNEL_ID = "VOICE_NOTIFICATION_CHANNEL_ID"
+        private const val VOICE_NOTIFICATION_CHANNEL_NAME = "Foreground MedicalVoice Service"
+        private const val APP_PACKAGE_NAME = "io.medicalvoice.android.MainActivity"
     }
 }
