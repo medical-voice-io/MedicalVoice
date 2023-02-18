@@ -1,6 +1,7 @@
 package io.medicalvoice.medicalvoiceservice.services
 
 import android.util.Log
+import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,14 +42,14 @@ class AudioRecorderInteractor @Inject constructor(
     }
 
     /** Старт запись аудио */
-    suspend fun startRecording() {
+    suspend fun startRecording(audioRecorderConfig: AudioRecorderConfig) {
         withContext(coroutineContext) {
 
             Log.i(
                 AudioRecorder.TAG,
                 "(${this@AudioRecorderInteractor::class.simpleName}) Start recording"
             )
-            audioRecorderRepository.startRecording()
+            audioRecorderRepository.startRecording(audioRecorderConfig)
         }
     }
 
