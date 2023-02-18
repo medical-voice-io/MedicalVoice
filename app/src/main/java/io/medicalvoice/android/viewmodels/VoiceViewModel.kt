@@ -1,13 +1,19 @@
-package io.medicalvoice.android
+package io.medicalvoice.android.viewmodels
 
 import android.app.Application
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.util.Log
+import androidx.core.os.bundleOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.medicalvoice.medicalvoiceservice.domain.AudioFormat
+import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
+import io.medicalvoice.medicalvoiceservice.domain.ChannelConfig
+import io.medicalvoice.medicalvoiceservice.domain.SampleRate
 import io.medicalvoice.medicalvoiceservice.services.VoiceService
 import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
@@ -34,12 +40,16 @@ class VoiceViewModel @Inject constructor(
     private val serviceConnection: ServiceConnection by lazy {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
+                _isServiceRunning.value = true
+
+                Log.i(this@VoiceViewModel.javaClass.simpleName, "onServiceConnected")
+
                 val medicalVoiceService = binder as MedicalVoiceBinder
                 launch(coroutineContext) {
                     medicalVoiceService.getService().audioRecordingFlow
                         .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                         .collect { event ->
-                            when(event) {
+                            when (event) {
                                 is StartRecordingEvent -> _isServiceRunning.value = true
                                 is StopRecordingEvent -> _isServiceRunning.value = false
                             }
@@ -48,13 +58,24 @@ class VoiceViewModel @Inject constructor(
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
+                Log.i(this@VoiceViewModel.javaClass.simpleName, "onServiceDisconnected")
                 _isServiceRunning.value = false
             }
         }
     }
 
-    fun startService() = with(getApplication<Application>().applicationContext) {
-        startService<VoiceService>()
+    fun startService(
+        sampleRate: Int,
+        encoding: Int,
+        channelFormat: Int
+    ) = with(getApplication<Application>().applicationContext) {
+        val audioConfig = AudioRecorderConfig(
+            sampleRate = SampleRate(value = sampleRate),
+            audioFormat = AudioFormat(value = encoding),
+            channelConfig = ChannelConfig(value = channelFormat)
+        )
+        val bundleData = bundleOf(VoiceService.CONFIG_KEY to audioConfig)
+        startService<VoiceService>(bundle = bundleData)
     }
 
     fun stopService() = with(getApplication<Application>().applicationContext) {
