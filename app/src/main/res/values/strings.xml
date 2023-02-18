@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">MedicalVoice</string>
+
+    <string name="start_voice_service_text">Record</string>
+    <string name="stop_voice_service_text">Stop</string>
+
+    <string name="config_title">Конфигурация</string>
+    <string name="sample_rate_header">Частота дискретизации</string>
+    <string name="encoding_header">Разрядность квантования</string>
+    <string name="channel_header">Формат записи</string>
+
+    <!--  Частоты дискретизации  -->
+    <string name="sample_rate_44100">44100</string>
+    <string name="sample_rate_22050">22050</string>
+    <string name="sample_rate_16000">16000</string>
+    <string name="sample_rate_11025">11025</string>
+    <string name="sample_rate_8000">8000</string>
+
+    <!--  Разрядности квантования  -->
+    <string name="encoding_pcm_16_bit">ENCODING_PCM_16BIT</string>
+    <string name="encoding_pcm_8_bit">ENCODING_PCM_8BIT</string>
+    <string name="encoding_pcm_float">ENCODING_PCM_FLOAT</string>
+    <string name="encoding_default">ENCODING_DEFAULT</string>
+
+    <!--  Каналы записи  -->
+    <string name="channel_stereo">Stereo</string>
+    <string name="channel_mono">Mono</string>
 </resources>
