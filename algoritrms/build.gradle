@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'io.medicalvoice.medicalvoiceservice'
+    namespace 'io.medicalvoice.algoritrms'
     compileSdk 33
 
     defaultConfig {
-        minSdk 21
+        minSdk 16
         targetSdk 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -32,10 +32,6 @@ android {
     }
 }
 
-kapt {
-    correctErrorTypes true
-}
-
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
@@ -51,6 +47,4 @@ dependencies {
     /** Hilt */
     implementation 'com.google.dagger:hilt-android:2.44.2'
     kapt 'com.google.dagger:hilt-compiler:2.44.2'
-
-    implementation project(":algoritrms")
 }

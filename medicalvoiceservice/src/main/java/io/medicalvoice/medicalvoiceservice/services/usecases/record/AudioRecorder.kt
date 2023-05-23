@@ -1,4 +1,4 @@
-package io.medicalvoice.medicalvoiceservice.services
+package io.medicalvoice.medicalvoiceservice.services.usecases.record
 
 import android.annotation.SuppressLint
 import android.media.AudioRecord
@@ -48,7 +48,8 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
 
                 audioRecorder.startRecording()
 
-                val buffer = ShortArray(bufferSize)
+                // val buffer = ShortArray(bufferSize)
+                val buffer = ShortArray(1024)
 
                 _audioRecordingEventFlow.emit(StartRecordingEvent())
 
@@ -61,7 +62,7 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
                             throw IOException("Read $shortsRead shorts from audioRecorder")
                         }
                         else -> {
-                            _audioBufferFlow.emit(buffer.copyOf())
+                            _audioBufferFlow.emit(buffer)
                         }
                     }
                 }

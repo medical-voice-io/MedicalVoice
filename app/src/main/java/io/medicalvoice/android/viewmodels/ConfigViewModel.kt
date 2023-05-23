@@ -1,20 +1,20 @@
 package io.medicalvoice.android.viewmodels
 
-import android.app.Application
 import android.media.AudioFormat
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.medicalvoice.android.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import javax.inject.Inject
 
 /**
  * ViewModel для управления конфигурацией AudioRecord
  */
-class ConfigViewModel(
-    application: Application
-) : AndroidViewModel(application), CoroutineScope by MainScope() {
+@HiltViewModel
+class ConfigViewModel @Inject constructor() : ViewModel(), CoroutineScope by MainScope() {
 
     private val _sampleRates = mapOf(
         44100 to R.string.sample_rate_44100,
