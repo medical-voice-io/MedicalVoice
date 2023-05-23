@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.SharedFlow
  * @property audioRecordingFlow флоу событий старта/остановки записи микрофона
  */
 class MedicalVoiceBinder(
+    val audioBufferFlow: SharedFlow<Array<DoubleArray>>,
     val audioRecordingFlow: SharedFlow<Event>
-) : Binder() {
-
-    fun getService(): MedicalVoiceBinder = this
-}
+) : Binder()

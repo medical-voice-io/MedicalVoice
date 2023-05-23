@@ -11,6 +11,9 @@ import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.extensions.getSerializable
+import io.medicalvoice.medicalvoiceservice.services.usecases.record.AudioRecorder
+import io.medicalvoice.medicalvoiceservice.services.usecases.record.AudioRecorderUseCase
+import io.medicalvoice.medicalvoiceservice.services.usecases.transform.TransformAlgorithmUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
@@ -23,7 +26,10 @@ import javax.inject.Inject
 class VoiceService : BaseNotificationService() {
 
     @Inject
-    lateinit var audioRecorderInteractor: AudioRecorderInteractor
+    lateinit var audioRecorderUseCase: AudioRecorderUseCase
+
+    @Inject
+    lateinit var transformAlgorithmUseCase: TransformAlgorithmUseCase
 
     override val appPackageName: String = APP_PACKAGE_NAME
     override val notificationData: NotificationData by lazy {
@@ -36,19 +42,30 @@ class VoiceService : BaseNotificationService() {
         )
     }
 
+    private val _audioBufferFlow = MutableSharedFlow<Array<DoubleArray>>()
     private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
 
     override fun onCreate() {
         super.onCreate()
         launch {
-            audioRecorderInteractor.audioBufferFlow
+            transformAlgorithmUseCase
+                .coefficients
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                .collect { buffer ->
-                    Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
+                .collect { coefficients ->
+                    _audioBufferFlow.emit(coefficients)
                 }
         }
         launch {
-            audioRecorderInteractor.audioRecordingEventFlow
+            audioRecorderUseCase.audioBufferFlow
+                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
+                .collect { buffer ->
+                    Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
+                    Log.i(AudioRecorder.TAG, "Buffer size: ${buffer.size}")
+                    transformAlgorithmUseCase.getCoefficients(buffer)
+                }
+        }
+        launch {
+            audioRecorderUseCase.audioRecordingEventFlow
                 .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                 .collect { event ->
                     if (event is StopRecordingEvent) stopSelf()
@@ -65,7 +82,7 @@ class VoiceService : BaseNotificationService() {
         val audioRecorderConfig = intent.getSerializable<AudioRecorderConfig>(CONFIG_KEY)
 
         launch(coroutineContext) {
-            audioRecorderInteractor.startRecording(audioRecorderConfig)
+            audioRecorderUseCase.startRecording(audioRecorderConfig)
             stopSelf()
         }
         return START_STICKY
@@ -74,7 +91,7 @@ class VoiceService : BaseNotificationService() {
     override fun stopService(name: Intent?): Boolean {
         Log.i(TAG, "$TAG stopService")
         launch(coroutineContext) {
-            audioRecorderInteractor.stopRecording()
+            audioRecorderUseCase.stopRecording()
         }
         return super.stopService(name)
     }
@@ -86,14 +103,17 @@ class VoiceService : BaseNotificationService() {
 
     override fun onBind(intent: Intent?): IBinder {
         Log.i(TAG, "$TAG onBind")
-        return MedicalVoiceBinder(_audioRecordingEventFlow.asSharedFlow())
+        return MedicalVoiceBinder(
+            audioBufferFlow = _audioBufferFlow,
+            audioRecordingFlow = _audioRecordingEventFlow.asSharedFlow()
+        )
     }
 
     override fun onDestroy() {
         Log.i(TAG, "$TAG onDestroy")
 
         launch(coroutineContext) {
-            audioRecorderInteractor.stopRecording()
+            audioRecorderUseCase.stopRecording()
         }
         super.onDestroy()
     }

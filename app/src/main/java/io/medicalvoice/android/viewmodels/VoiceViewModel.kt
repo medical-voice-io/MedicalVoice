@@ -23,7 +23,9 @@ import io.medicalvoice.medicalvoiceservice.services.extensions.startService
 import io.medicalvoice.medicalvoiceservice.services.extensions.stopService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,6 +39,9 @@ class VoiceViewModel @Inject constructor(
     private val _isServiceRunning = MutableLiveData(false)
     val isServiceRunning: LiveData<Boolean> = _isServiceRunning
 
+    private val _spectrogramFlow = MutableSharedFlow<Array<DoubleArray>>()
+    val spectrogramFlow = _spectrogramFlow.asSharedFlow()
+
     private val serviceConnection: ServiceConnection by lazy {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
@@ -45,16 +50,8 @@ class VoiceViewModel @Inject constructor(
                 Log.i(this@VoiceViewModel.javaClass.simpleName, "onServiceConnected")
 
                 val medicalVoiceService = binder as MedicalVoiceBinder
-                launch(coroutineContext) {
-                    medicalVoiceService.getService().audioRecordingFlow
-                        .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                        .collect { event ->
-                            when (event) {
-                                is StartRecordingEvent -> _isServiceRunning.value = true
-                                is StopRecordingEvent -> _isServiceRunning.value = false
-                            }
-                        }
-                }
+                listenRecordingState(medicalVoiceService)
+                listenCoefficients(medicalVoiceService)
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
@@ -90,5 +87,24 @@ class VoiceViewModel @Inject constructor(
         if (_isServiceRunning.value != true) return
         unbindService(serviceConnection)
         _isServiceRunning.value = false
+    }
+
+    private fun listenRecordingState(serviceBinder: MedicalVoiceBinder) = launch {
+        serviceBinder.audioRecordingFlow
+            .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
+            .collect { event ->
+                when (event) {
+                    is StartRecordingEvent -> _isServiceRunning.value = true
+                    is StopRecordingEvent -> _isServiceRunning.value = false
+                }
+            }
+    }
+
+    private fun listenCoefficients(serviceBinder: MedicalVoiceBinder) = launch {
+        serviceBinder.audioBufferFlow
+            .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
+            .collect { coefficients ->
+                _spectrogramFlow.emit(coefficients)
+            }
     }
 }
