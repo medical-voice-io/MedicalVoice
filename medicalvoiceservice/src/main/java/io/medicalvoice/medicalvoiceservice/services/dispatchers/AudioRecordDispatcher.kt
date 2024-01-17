@@ -15,5 +15,4 @@ private val dispatcher = Executors.newSingleThreadExecutor { runnable ->
     }
 }.asCoroutineDispatcher()
 
-internal val AudioRecordDispatcher
-    get() = dispatcher
+internal val AudioRecordDispatcher = dispatcher

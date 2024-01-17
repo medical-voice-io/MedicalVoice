@@ -2,14 +2,8 @@ package io.medicalvoice.medicalvoiceservice.services
 
 import android.util.Log
 import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
-import io.medicalvoice.medicalvoiceservice.services.events.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -24,24 +18,9 @@ class AudioRecorderRepository @Inject constructor(
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.IO
 
-    private val _audioBufferFlow = MutableSharedFlow<ShortArray>()
-    val audioBufferFlow = _audioBufferFlow.asSharedFlow()
+    val audioBufferFlow = audioRecorder.audioBufferFlow
 
-    private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
-    val audioRecordingEventFlow = _audioRecordingEventFlow.asSharedFlow()
-
-    init {
-        launch {
-            audioRecorder.audioBufferFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                .collect(_audioBufferFlow::emit)
-        }
-        launch {
-            audioRecorder.audioRecordingEventFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                .collect(_audioRecordingEventFlow::emit)
-        }
-    }
+    val audioRecordingEventFlow = audioRecorder.audioRecordingEventFlow
 
     /** Запускает запись аудио */
     suspend fun startRecording(
@@ -57,7 +36,7 @@ class AudioRecorderRepository @Inject constructor(
     }
 
     /** Останавливает запись аудио */
-    suspend fun stopRecording() {
+    fun stopRecording() {
 
         Log.i(
             AudioRecorder.TAG,

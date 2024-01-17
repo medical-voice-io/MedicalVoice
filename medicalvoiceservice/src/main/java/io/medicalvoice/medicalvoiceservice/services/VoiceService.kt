@@ -11,10 +11,8 @@ import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.extensions.getSerializable
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,23 +34,21 @@ class VoiceService : BaseNotificationService() {
         )
     }
 
-    private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
+    private val _audioRecordingEventFlow = MutableStateFlow<Event>(StopRecordingEvent)
 
     override fun onCreate() {
         super.onCreate()
         launch {
             audioRecorderInteractor.audioBufferFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                 .collect { buffer ->
                     Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
                 }
         }
         launch {
             audioRecorderInteractor.audioRecordingEventFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
                 .collect { event ->
-                    if (event is StopRecordingEvent) stopSelf()
                     _audioRecordingEventFlow.emit(event)
+                    if (event is StopRecordingEvent) stopSelf()
                 }
         }
     }
@@ -66,16 +62,15 @@ class VoiceService : BaseNotificationService() {
 
         launch(coroutineContext) {
             audioRecorderInteractor.startRecording(audioRecorderConfig)
-            stopSelf()
+            // TODO: зачем?
+            // stopSelf()
         }
         return START_STICKY
     }
 
     override fun stopService(name: Intent?): Boolean {
         Log.i(TAG, "$TAG stopService")
-        launch(coroutineContext) {
-            audioRecorderInteractor.stopRecording()
-        }
+        audioRecorderInteractor.stopRecording()
         return super.stopService(name)
     }
 
@@ -86,15 +81,13 @@ class VoiceService : BaseNotificationService() {
 
     override fun onBind(intent: Intent?): IBinder {
         Log.i(TAG, "$TAG onBind")
-        return MedicalVoiceBinder(_audioRecordingEventFlow.asSharedFlow())
+        return MedicalVoiceBinder(_audioRecordingEventFlow.asStateFlow())
     }
 
     override fun onDestroy() {
         Log.i(TAG, "$TAG onDestroy")
 
-        launch(coroutineContext) {
-            audioRecorderInteractor.stopRecording()
-        }
+        audioRecorderInteractor.stopRecording()
         super.onDestroy()
     }
 

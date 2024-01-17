@@ -3,11 +3,14 @@ package io.medicalvoice.medicalvoiceservice.services
 import android.util.Log
 import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
 import io.medicalvoice.medicalvoiceservice.services.events.Event
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -30,14 +33,10 @@ class AudioRecorderInteractor @Inject constructor(
 
     init {
         launch {
-            audioRecorderRepository.audioBufferFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                .collect(_audioBufferFlow::emit)
+            audioRecorderRepository.audioBufferFlow.collect(_audioBufferFlow::emit)
         }
         launch {
-            audioRecorderRepository.audioRecordingEventFlow
-                .shareIn(this, started = SharingStarted.Eagerly, replay = 1)
-                .collect(_audioRecordingEventFlow::emit)
+            audioRecorderRepository.audioRecordingEventFlow.collect(_audioRecordingEventFlow::emit)
         }
     }
 
@@ -54,7 +53,7 @@ class AudioRecorderInteractor @Inject constructor(
     }
 
     /** Остановка записи аудио */
-    suspend fun stopRecording() {
+    fun stopRecording() {
         Log.i(AudioRecorder.TAG, "(${this::class.simpleName}) Stop recording")
         audioRecorderRepository.stopRecording()
     }

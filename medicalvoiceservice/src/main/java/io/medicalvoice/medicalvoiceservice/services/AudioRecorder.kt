@@ -13,7 +13,9 @@ import io.medicalvoice.medicalvoiceservice.services.exceptions.CreateAudioRecord
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.IOException
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -26,19 +28,18 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
     private var bufferSize: Int = 0
+    private lateinit var audioRecorder: AudioRecord
 
     private val _audioBufferFlow = MutableSharedFlow<ShortArray>()
     val audioBufferFlow = _audioBufferFlow.asSharedFlow()
 
-    private val _audioRecordingEventFlow = MutableSharedFlow<Event>()
-    val audioRecordingEventFlow = _audioRecordingEventFlow.asSharedFlow()
+    private val _audioRecordingEventFlow = MutableStateFlow<Event>(StopRecordingEvent)
+    val audioRecordingEventFlow = _audioRecordingEventFlow.asStateFlow()
 
     /** Запуск корутины, которая записывает аудио с микрофона */
     suspend fun startRecording(
         audioRecorderConfig: AudioRecorderConfig
     ) = withContext(coroutineContext) {
-        lateinit var audioRecorder: AudioRecord
-
         try {
             Log.i(TAG, "Start recording")
 
@@ -46,11 +47,10 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
             retry(countAttempts, delay = 300) {
                 audioRecorder = createRecorder(audioRecorderConfig)
 
+                _audioRecordingEventFlow.emit(StartRecordingEvent)
                 audioRecorder.startRecording()
 
                 val buffer = ShortArray(bufferSize)
-
-                _audioRecordingEventFlow.emit(StartRecordingEvent())
 
                 loop@ while (isActive) {
                     val shortsRead = audioRecorder.read(buffer, 0, buffer.size)
@@ -81,17 +81,17 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
                 Log.i(TAG, "finally")
                 audioRecorder.stop()
                 audioRecorder.release()
-                _audioRecordingEventFlow.emit(StopRecordingEvent())
+                _audioRecordingEventFlow.emit(StopRecordingEvent)
             }
         }
     }
 
     /** Останавливает корутину записи аудио */
-    suspend fun stopAudioRecording() {
+    fun stopAudioRecording() {
 
         Log.i(TAG, "(${this@AudioRecorder::class.simpleName}) Stop recording")
 
-        coroutineContext.job.cancelAndJoin()
+        coroutineContext.job.cancel()
     }
 
     /** Создает инстанс AudioRecord */

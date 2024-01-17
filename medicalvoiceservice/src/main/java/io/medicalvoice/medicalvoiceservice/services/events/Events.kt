@@ -4,7 +4,7 @@ package io.medicalvoice.medicalvoiceservice.services.events
 sealed interface Event
 
 /** Событие старта записи микрофона */
-class StartRecordingEvent : Event
+object StartRecordingEvent : Event
 
 /** Событие остановки записи микрофона */
-class StopRecordingEvent : Event
+object StopRecordingEvent : Event

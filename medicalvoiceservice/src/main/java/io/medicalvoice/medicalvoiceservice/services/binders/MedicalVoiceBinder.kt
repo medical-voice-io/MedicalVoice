@@ -2,7 +2,7 @@ package io.medicalvoice.medicalvoiceservice.services.binders
 
 import android.os.Binder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Binder для получения данных из сервиса
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.SharedFlow
  * @property audioRecordingFlow флоу событий старта/остановки записи микрофона
  */
 class MedicalVoiceBinder(
-    val audioRecordingFlow: SharedFlow<Event>
+    val audioRecordingFlow: StateFlow<Event>
 ) : Binder() {
 
     fun getService(): MedicalVoiceBinder = this
