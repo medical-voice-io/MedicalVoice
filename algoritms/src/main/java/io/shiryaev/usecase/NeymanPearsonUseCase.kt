@@ -7,12 +7,15 @@ import javax.inject.Inject
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+typealias NoiseFrames = List<Frame>
+typealias SecondFrames = List<Frame>
+
 class NeymanPearsonUseCase @Inject constructor() {
 
     suspend operator fun invoke(
         frames: List<Frame>,
         b: Double
-    ) = withContext(Dispatchers.Default) {
+    ): List<Frame> = withContext(Dispatchers.Default) {
         val noisePowers = frames.map { frame -> frame.power }
 
         // Математическое отклонение
@@ -29,12 +32,22 @@ class NeymanPearsonUseCase @Inject constructor() {
         // Вычисление порога U по критерию Неймана-Пирсона
         val threshold = noiseMean + b * noiseStdDev
 
-        return frames.map { frame ->
-            if (frame.power > threshold) {
-                // Переместить во 2 класс
-            } else {
-                // Оставить в 3 классе
-            }
+        // val noiseFrames = mutableListOf<Frame>()
+        // val secondFrames = mutableListOf<Frame>()
+
+        frames.map { frame ->
+            frame.copy(
+                isNoise = frame.power < threshold
+            )
+            // if (frame.power > threshold) {
+            //     // Переместить во 2 класс
+            //     secondFrames.add(frame)
+            // } else {
+            //     // Оставить в 3 классе
+            //     noiseFrames.add(frame)
+            // }
         }
+
+        // secondFrames to noiseFrames
     }
 }
