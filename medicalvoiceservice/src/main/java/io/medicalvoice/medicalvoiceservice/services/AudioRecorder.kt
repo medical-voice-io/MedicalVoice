@@ -28,7 +28,6 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
     private var bufferSize: Int = 0
-    private lateinit var audioRecorder: AudioRecord
 
     private val _audioBufferFlow = MutableSharedFlow<ShortArray>()
     val audioBufferFlow = _audioBufferFlow.asSharedFlow()
@@ -40,36 +39,38 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
     suspend fun startRecording(
         audioRecorderConfig: AudioRecorderConfig
     ) = withContext(coroutineContext) {
+        var audioRecorder: AudioRecord? = null
         try {
             Log.i(TAG, "Start recording")
 
             val countAttempts = 5
             retry(countAttempts, delay = 300) {
-                audioRecorder = createRecorder(audioRecorderConfig)
+                audioRecorder = createRecorder(audioRecorderConfig).apply {
+                    _audioRecordingEventFlow.emit(StartRecordingEvent)
+                    startRecording()
 
-                _audioRecordingEventFlow.emit(StartRecordingEvent)
-                audioRecorder.startRecording()
+                    val buffer = ShortArray(bufferSize)
 
-                val buffer = ShortArray(bufferSize)
+                    loop@ while (isActive) {
+                        val shortsRead = read(buffer, 0, buffer.size)
+                        when {
+                            shortsRead <= 0 -> {
+                                stop()
+                                release()
+                                throw IOException("Read $shortsRead shorts from audioRecorder")
+                            }
 
-                loop@ while (isActive) {
-                    val shortsRead = audioRecorder.read(buffer, 0, buffer.size)
-                    when {
-                        shortsRead <= 0 -> {
-                            audioRecorder.stop()
-                            audioRecorder.release()
-                            throw IOException("Read $shortsRead shorts from audioRecorder")
-                        }
-                        else -> {
-                            _audioBufferFlow.emit(buffer.copyOf())
+                            else -> {
+                                _audioBufferFlow.emit(buffer.copyOf())
+                            }
                         }
                     }
+
+                    Log.i(TAG, "Цикл while завершился!")
+
+                    stop()
+                    release()
                 }
-
-                Log.i(TAG, "Цикл while завершился!")
-
-                audioRecorder.stop()
-                audioRecorder.release()
             }
         } catch (error: CancellationException) {
             // Ignore
@@ -79,8 +80,10 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
         } finally {
             withContext(NonCancellable) {
                 Log.i(TAG, "finally")
-                audioRecorder.stop()
-                audioRecorder.release()
+                if (audioRecorder?.state == AudioRecord.STATE_INITIALIZED) {
+                    audioRecorder?.stop()
+                }
+                audioRecorder?.release()
                 _audioRecordingEventFlow.emit(StopRecordingEvent)
             }
         }
