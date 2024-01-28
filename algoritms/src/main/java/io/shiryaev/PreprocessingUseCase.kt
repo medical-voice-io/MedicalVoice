@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class FinalUseCase @Inject constructor(
+class PreprocessingUseCase @Inject constructor(
     private val getPowerUseCase: GetPowerUseCase,
     private val nMeansMethodUseCase: KmeansMethodUseCase,
     private val neymanPearsonUseCase: NeymanPearsonUseCase,
@@ -27,13 +27,16 @@ class FinalUseCase @Inject constructor(
                 power = power
             )
         }
+        // Log.i("PREPROCESSING", frames.map { it.toString() }.toString())
 
         val clusters = nMeansMethodUseCase(
             frames = frames,
             k = 3
         )
 
-        val noiseCluster = clusters.minByOrNull { it.centroid } ?: error("Noise cluster not found")
+        val noiseCluster = clusters.minByOrNull { cluster ->
+            cluster.centroid
+        } ?: return@withContext emptyList<Frame>()
 
         /*
         Нужно удалить последний кластер с шумом.
@@ -41,8 +44,9 @@ class FinalUseCase @Inject constructor(
         Для этого сначала сортируем кластеры по центроидам.
         Удаляем последний кластер (с наименьшим центроидом)
          */
-        val clustersWithoutNoise =
-            clusters.sortedBy { cluster -> cluster.centroid }.drop(clusters.lastIndex)
+        val clustersWithoutNoise = clusters.sortedBy { cluster ->
+            cluster.centroid
+        }.drop(clusters.lastIndex)
 
         val framesWithAnyNoise = neymanPearsonUseCase(
             frames = noiseCluster.points,

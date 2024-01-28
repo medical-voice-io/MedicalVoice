@@ -11,7 +11,10 @@ import io.medicalvoice.medicalvoiceservice.services.binders.MedicalVoiceBinder
 import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.extensions.getSerializable
+import io.shiryaev.method.Frame
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,13 +38,14 @@ class VoiceService : BaseNotificationService() {
     }
 
     private val _audioRecordingEventFlow = MutableStateFlow<Event>(StopRecordingEvent)
+    private val _audioFramesFlow = MutableSharedFlow<List<Frame>>()
 
     override fun onCreate() {
         super.onCreate()
         launch {
             audioRecorderInteractor.audioBufferFlow
                 .collect { buffer ->
-                    Log.i(AudioRecorder.TAG, buffer.map { it.toString() }.toString())
+                    _audioFramesFlow.emit(buffer)
                 }
         }
         launch {
@@ -81,14 +85,17 @@ class VoiceService : BaseNotificationService() {
 
     override fun onBind(intent: Intent?): IBinder {
         Log.i(TAG, "$TAG onBind")
-        return MedicalVoiceBinder(_audioRecordingEventFlow.asStateFlow())
+        return MedicalVoiceBinder(
+            audioRecordingFlow = _audioRecordingEventFlow.asStateFlow(),
+            audioFramesFlow = _audioFramesFlow.asSharedFlow()
+        )
     }
 
     override fun onDestroy() {
         Log.i(TAG, "$TAG onDestroy")
 
-        audioRecorderInteractor.stopRecording()
         super.onDestroy()
+        audioRecorderInteractor.stopRecording()
     }
 
     companion object {

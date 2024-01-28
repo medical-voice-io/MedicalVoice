@@ -1,5 +1,6 @@
 package io.shiryaev.usecase
 
+import android.util.Log
 import io.shiryaev.algoritms.Algoritms
 import io.shiryaev.data.Complex
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ class GetPowerUseCase @Inject constructor(
             totalSignalNumber = amplitude.size,
             countNumbersForFft = n
         )
+        Log.i("PREPROCESSING", "$s $n $K")
         /* Сигнал в виде ряда Фурье */
         val Xk = algoritms.directFourierTransform(
             amplitudes = amplitude,

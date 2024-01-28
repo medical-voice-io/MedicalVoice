@@ -39,51 +39,44 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
     suspend fun startRecording(
         audioRecorderConfig: AudioRecorderConfig
     ) = withContext(coroutineContext) {
-        var audioRecorder: AudioRecord? = null
-        try {
-            Log.i(TAG, "Start recording")
-
-            val countAttempts = 5
-            retry(countAttempts, delay = 300) {
-                audioRecorder = createRecorder(audioRecorderConfig).apply {
+        val countAttempts = 5
+        retry(countAttempts, delay = 300) {
+            runCatching {
+                createRecorder(audioRecorderConfig)
+            }.onSuccess { audioRecord ->
+                try {
                     _audioRecordingEventFlow.emit(StartRecordingEvent)
-                    startRecording()
+                    audioRecord.startRecording()
 
                     val buffer = ShortArray(bufferSize)
 
                     loop@ while (isActive) {
-                        val shortsRead = read(buffer, 0, buffer.size)
-                        when {
-                            shortsRead <= 0 -> {
-                                stop()
-                                release()
-                                throw IOException("Read $shortsRead shorts from audioRecorder")
-                            }
-
-                            else -> {
-                                _audioBufferFlow.emit(buffer.copyOf())
-                            }
+                        val shortsRead = audioRecord.read(buffer, 0, buffer.size)
+                        if (shortsRead > 0) {
+                            _audioBufferFlow.emit(buffer.copyOf())
+                        } else {
+                            audioRecord.release()
+                            throw IOException("Read $shortsRead shorts from audioRecorder")
                         }
                     }
 
                     Log.i(TAG, "Цикл while завершился!")
 
-                    stop()
-                    release()
+                    audioRecord.release()
+                } catch (error: CancellationException) {
+                    // Ignore
+                } catch (error: Throwable) {
+                    currentCoroutineContext().cancel()
+                    Log.e(TAG, "Uncaught AudioRecord exception", error)
+                } finally {
+                    withContext(NonCancellable) {
+                        Log.i(TAG, "finally")
+                        audioRecord.release()
+                        _audioRecordingEventFlow.emit(StopRecordingEvent)
+                    }
                 }
-            }
-        } catch (error: CancellationException) {
-            // Ignore
-        } catch (error: Throwable) {
-            currentCoroutineContext().cancel()
-            Log.e(TAG, "Uncaught AudioRecord exception", error)
-        } finally {
-            withContext(NonCancellable) {
-                Log.i(TAG, "finally")
-                if (audioRecorder?.state == AudioRecord.STATE_INITIALIZED) {
-                    audioRecorder?.stop()
-                }
-                audioRecorder?.release()
+            }.onFailure {
+                Log.i(TAG, "Не удалось создать AudioRecord")
                 _audioRecordingEventFlow.emit(StopRecordingEvent)
             }
         }

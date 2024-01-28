@@ -10,7 +10,7 @@ import io.medicalvoice.medicalvoiceservice.services.extensions.startForeground
 import io.medicalvoice.medicalvoiceservice.services.extensions.stopForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -18,7 +18,7 @@ import kotlin.coroutines.CoroutineContext
  */
 abstract class BaseNotificationService : Service(), CoroutineScope {
 
-    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.IO
+    override val coroutineContext: CoroutineContext = Job() + Dispatchers.IO
 
     abstract val notificationData: NotificationData
     abstract val appPackageName: String

@@ -7,8 +7,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.os.bundleOf
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.medicalvoice.medicalvoiceservice.domain.AudioFormat
 import io.medicalvoice.medicalvoiceservice.domain.AudioRecorderConfig
@@ -21,9 +19,13 @@ import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.extensions.bindService
 import io.medicalvoice.medicalvoiceservice.services.extensions.startService
 import io.medicalvoice.medicalvoiceservice.services.extensions.stopService
+import io.shiryaev.method.Frame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,8 +36,11 @@ class VoiceViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application), CoroutineScope by MainScope() {
 
-    private val _isServiceRunning = MutableLiveData(false)
-    val isServiceRunning: LiveData<Boolean> = _isServiceRunning
+    private val _isServiceRunning = MutableStateFlow(false)
+    val isServiceRunning: StateFlow<Boolean> = _isServiceRunning.asStateFlow()
+
+    private val _audioFramesFlow = MutableStateFlow(listOf<Frame>())
+    val audioFramesFlow: StateFlow<List<Frame>> = _audioFramesFlow.asStateFlow()
 
     private val serviceConnection: ServiceConnection by lazy {
         object : ServiceConnection {
@@ -53,6 +58,12 @@ class VoiceViewModel @Inject constructor(
                                 is StartRecordingEvent -> _isServiceRunning.value = true
                                 is StopRecordingEvent -> _isServiceRunning.value = false
                             }
+                        }
+                }
+                launch {
+                    medicalVoiceService.getService().audioFramesFlow
+                        .collect { frames ->
+                            _audioFramesFlow.emit(frames)
                         }
                 }
             }

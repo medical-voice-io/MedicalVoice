@@ -1,10 +1,11 @@
 package io.shiryaev.algoritms
 
 import io.shiryaev.data.Complex
+import javax.inject.Inject
 import kotlin.math.log2
 import kotlin.math.pow
 
-class Algoritms {
+class Algoritms @Inject constructor() {
 
     /**
      * Количество отсчетов
@@ -22,7 +23,7 @@ class Algoritms {
      * @param countNumbers количество отсчетов
      * @return ближайшее число в степени 2 для количества отсчетов [countNumbers]
      */
-    fun nearestNumberInPowerOf2(countNumbers: Double) = log2(countNumbers)
+    fun nearestNumberInPowerOf2(countNumbers: Double): Int = log2(countNumbers).toInt()
 
     /**
      * Ближайшее число в степени 2
@@ -33,7 +34,7 @@ class Algoritms {
     fun nearestNumberInPowerOf2(
         frequency: Int,
         stationarityPeriod: Double = 0.02,
-    ) = nearestNumberInPowerOf2(
+    ): Int = nearestNumberInPowerOf2(
         countNumbers = getCountNumbers(frequency, stationarityPeriod)
     )
 
@@ -43,7 +44,7 @@ class Algoritms {
      * @return Размер окна, выраженный в количестве отсчетов
      */
     fun countNumbersForFft(
-        nearestNumberInPowerOf2: Double,
+        nearestNumberInPowerOf2: Int,
     ): Int = 2.0.pow(nearestNumberInPowerOf2).toInt()
 
     /**
