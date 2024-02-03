@@ -10,6 +10,7 @@ import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.exceptions.CreateAudioRecordException
+import io.medicalvoice.medicalvoiceservice.usecase.GetCountNumberForFft
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,10 +25,12 @@ import kotlin.coroutines.CoroutineContext
  * Класс для работы с AudioRecord.
  * Может запускать и останавливать запись аудио с микрофона
  */
-class AudioRecorder @Inject constructor() : CoroutineScope {
+class AudioRecorder @Inject constructor(
+    private val getCountNumberForFft: GetCountNumberForFft,
+) : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
-    private var bufferSize: Int = 0
+    // private var bufferSize: Int = 0
 
     private val _audioBufferFlow = MutableSharedFlow<ShortArray>()
     val audioBufferFlow = _audioBufferFlow.asSharedFlow()
@@ -37,17 +40,22 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
 
     /** Запуск корутины, которая записывает аудио с микрофона */
     suspend fun startRecording(
-        audioRecorderConfig: AudioRecorderConfig
+        audioRecorderConfig: AudioRecorderConfig,
+        countNumberForFft: Int
     ) = withContext(coroutineContext) {
         val countAttempts = 5
         retry(countAttempts, delay = 300) {
             runCatching {
-                createRecorder(audioRecorderConfig)
-            }.onSuccess { audioRecord ->
+                createRecorder(audioRecorderConfig, countNumberForFft)
+            }.onSuccess { (audioRecord, bufferSize) ->
+                // val bufferSizeFoFft = getCountNumberForFft(
+                //     frequency = audioRecorderConfig.sampleRate.value
+                // )
                 try {
                     _audioRecordingEventFlow.emit(StartRecordingEvent)
                     audioRecord.startRecording()
 
+                    // val buffer = ShortArray(bufferSize)
                     val buffer = ShortArray(bufferSize)
 
                     loop@ while (isActive) {
@@ -92,14 +100,19 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
 
     /** Создает инстанс AudioRecord */
     @SuppressLint("MissingPermission")
-    fun createRecorder(audioRecorderConfig: AudioRecorderConfig): AudioRecord {
-        bufferSize = with(audioRecorderConfig) {
-            AudioRecord.getMinBufferSize(
-                sampleRate.value,
-                channelConfig.value,
-                audioFormat.value
-            )
-        }
+    fun createRecorder(
+        audioRecorderConfig: AudioRecorderConfig,
+        countNumberForFft: Int,
+    ): Pair<AudioRecord, Int> {
+        val minIteration = 20
+        // val bufferSize = with(audioRecorderConfig) {
+        //     AudioRecord.getMinBufferSize(
+        //         sampleRate.value,
+        //         channelConfig.value,
+        //         audioFormat.value
+        //     ) * 10
+        // }
+        val bufferSize = countNumberForFft * minIteration
         if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
             val recorder = with(audioRecorderConfig) {
                 AudioRecord(
@@ -111,7 +124,7 @@ class AudioRecorder @Inject constructor() : CoroutineScope {
                 )
             }
             if (recorder.state == AudioRecord.STATE_INITIALIZED) {
-                return recorder
+                return recorder to bufferSize
             } else {
                 recorder.release()
             }

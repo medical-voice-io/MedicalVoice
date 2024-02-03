@@ -51,4 +51,6 @@ dependencies {
     /** Hilt */
     implementation 'com.google.dagger:hilt-android:2.50'
     kapt 'com.google.dagger:hilt-compiler:2.50'
+
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 }

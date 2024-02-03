@@ -15,11 +15,11 @@ class PreprocessingUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke(
-        frequency: Int,
+        countNumberForFft: Int,
         amplitudes: List<Double>
     ): List<Frame> = withContext(Dispatchers.Default) {
         val frames = getPowerUseCase(
-            frequency = frequency,
+            countNumberForFft = countNumberForFft,
             amplitude = amplitudes
         ).mapIndexed { index, power ->
             Frame(
@@ -27,7 +27,7 @@ class PreprocessingUseCase @Inject constructor(
                 power = power
             )
         }
-        // Log.i("PREPROCESSING", frames.map { it.toString() }.toString())
+        val maxPower = frames.maxBy { frame -> frame.power }.power
 
         val clusters = nMeansMethodUseCase(
             frames = frames,
@@ -46,18 +46,22 @@ class PreprocessingUseCase @Inject constructor(
          */
         val clustersWithoutNoise = clusters.sortedBy { cluster ->
             cluster.centroid
-        }.drop(clusters.lastIndex)
+        }.dropLast(1)
 
         val framesWithAnyNoise = neymanPearsonUseCase(
             frames = noiseCluster.points,
-            b = 3.0
+            b = 2.0
         )
 
-        val finalPowerFrames = buildList {
+        buildList {
             addAll(clustersWithoutNoise.flatMap { cluster -> cluster.points })
             addAll(framesWithAnyNoise)
-        }.sortedBy { frame -> frame.id }
-
-        finalPowerFrames
+        }
+            .sortedBy { frame -> frame.id }
+            .map { frame ->
+                frame.copy(
+                    power = frame.power / maxPower
+                )
+            }
     }
 }

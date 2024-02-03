@@ -1,9 +1,15 @@
 package io.shiryaev.algoritms
 
 import io.shiryaev.data.Complex
+import org.apache.commons.math3.transform.DftNormalization
+import org.apache.commons.math3.transform.FastFourierTransformer
+import org.apache.commons.math3.transform.TransformType
 import javax.inject.Inject
+import kotlin.math.ceil
 import kotlin.math.log2
 import kotlin.math.pow
+import kotlin.math.roundToInt
+import org.apache.commons.math3.complex.Complex as ApacheComplex
 
 class Algoritms @Inject constructor() {
 
@@ -56,7 +62,7 @@ class Algoritms @Inject constructor() {
     fun numberIterationsForAmplitudes(
         totalSignalNumber: Int,
         countNumbersForFft: Int,
-    ): Int = totalSignalNumber / countNumbersForFft
+    ): Int = ceil(totalSignalNumber.toDouble() / countNumbersForFft.toDouble()).roundToInt()
 
     /**
      * Прямое преобразование Фурье в одном окне
@@ -68,16 +74,42 @@ class Algoritms @Inject constructor() {
         amplitudes: List<Double>,
         countNumbersForFft: Int,
         numberIterationsForAmplitudes: Int,
-    ): List<List<Complex>> {
-        val complexSpectrum = mutableListOf<List<Complex>>()
-        for (i in 0 until numberIterationsForAmplitudes) {
-            val startIndex = i * countNumbersForFft
+    ): List<List<Complex>> = buildList {
+        repeat(numberIterationsForAmplitudes) { index ->
+            val startIndex = index * countNumbersForFft
             val endIndex = startIndex + countNumbersForFft
-            val frame = amplitudes.subList(startIndex, endIndex)
+            val frame = amplitudes.subList(
+                startIndex,
+                endIndex
+            )
             val spectrum = fft(frame)
-            complexSpectrum.add(spectrum)
+            add(spectrum)
         }
-        return complexSpectrum
+    }
+
+    fun directFourierTransformApache(
+        amplitudes: List<Double>,
+        countNumbersForFft: Int,
+        numberIterationsForAmplitudes: Int,
+    ): List<List<ApacheComplex>> {
+        val fft = FastFourierTransformer(
+            DftNormalization.STANDARD
+        )
+        return buildList {
+            repeat(numberIterationsForAmplitudes) { index ->
+                val startIndex = index * countNumbersForFft
+                val endIndex = startIndex + countNumbersForFft
+                val frame = amplitudes.subList(
+                    startIndex,
+                    endIndex
+                ).toDoubleArray()
+                val spectrum = fft.transform(
+                    frame,
+                    TransformType.FORWARD
+                ).toList()
+                add(spectrum)
+            }
+        }
     }
 
     /**
@@ -107,12 +139,12 @@ class Algoritms @Inject constructor() {
         val even = fft(amplitudes.filterIndexed { index, _ -> index % 2 == 0 })
         val odd = fft(amplitudes.filterIndexed { index, _ -> index % 2 == 1 })
 
-        val combined = mutableListOf<Complex>()
-        for (k in 0 until N / 2) {
-            val t = Complex.polar(1.0, -2 * Math.PI * k / N) * odd[k]
-            combined.add(even[k] + t)
-            combined.add(even[k] - t)
+        return buildList {
+            repeat(N / 2) { k ->
+                val t = Complex.polar(1.0, -2.0 * Math.PI * k / N) * odd[k]
+                add(even[k] + t)
+                add(even[k] - t)
+            }
         }
-        return combined
     }
 }

@@ -19,7 +19,8 @@ class AudioRecorderRepository @Inject constructor(
 
     /** Запускает запись аудио */
     suspend fun startRecording(
-        audioRecorderConfig: AudioRecorderConfig
+        audioRecorderConfig: AudioRecorderConfig,
+        countNumberForFft: Int,
     ) {
 
         Log.i(
@@ -27,7 +28,10 @@ class AudioRecorderRepository @Inject constructor(
             "(${this@AudioRecorderRepository::class.simpleName}) Start recording"
         )
 
-        audioRecorder.startRecording(audioRecorderConfig)
+        audioRecorder.startRecording(
+            audioRecorderConfig = audioRecorderConfig,
+            countNumberForFft = countNumberForFft
+        )
     }
 
     /** Останавливает запись аудио */

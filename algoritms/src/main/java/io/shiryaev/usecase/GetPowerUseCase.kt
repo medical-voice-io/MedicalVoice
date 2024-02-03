@@ -1,6 +1,5 @@
 package io.shiryaev.usecase
 
-import android.util.Log
 import io.shiryaev.algoritms.Algoritms
 import io.shiryaev.data.Complex
 import kotlinx.coroutines.Dispatchers
@@ -11,30 +10,25 @@ class GetPowerUseCase @Inject constructor(
     private val algoritms: Algoritms,
 ) {
     suspend operator fun invoke(
-        frequency: Int,
+        countNumberForFft: Int,
         amplitude: List<Double>,
     ): List<Double> = withContext(Dispatchers.Default) {
-        /* Ближайшее число степени двойки */
-        val s = algoritms.nearestNumberInPowerOf2(
-            frequency = frequency,
-            stationarityPeriod = 0.2
-        )
-        /* Кол-во отсчетов для БПФ */
-        val n = algoritms.countNumbersForFft(s)
         /* Кол-во итераций для исходного кол-ва амплитуд */
         val K = algoritms.numberIterationsForAmplitudes(
             totalSignalNumber = amplitude.size,
-            countNumbersForFft = n
+            countNumbersForFft = countNumberForFft
         )
-        Log.i("PREPROCESSING", "$s $n $K")
         /* Сигнал в виде ряда Фурье */
-        val Xk = algoritms.directFourierTransform(
+        val Xk = algoritms.directFourierTransformApache(
             amplitudes = amplitude,
-            countNumbersForFft = n,
+            countNumbersForFft = countNumberForFft,
             numberIterationsForAmplitudes = K
         )
         /* Спектр амплитуд */
-        val Vk = getAmplitudeSpectrum(Xk)
+        // val Vk = getAmplitudeSpectrum(Xk)
+        val Vk = Xk.map { spectrum ->
+            spectrum.map { complex -> complex.abs() }
+        }
         /* Мощность */
         getPower(Vk)
     }
