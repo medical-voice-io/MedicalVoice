@@ -1,5 +1,6 @@
 package io.shiryaev
 
+import android.util.Log
 import io.shiryaev.method.Frame
 import io.shiryaev.usecase.GetPowerUseCase
 import io.shiryaev.usecase.KmeansMethodUseCase
@@ -7,6 +8,8 @@ import io.shiryaev.usecase.NeymanPearsonUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
+private const val threshold = 200_000_000.0
 
 class PreprocessingUseCase @Inject constructor(
     private val getPowerUseCase: GetPowerUseCase,
@@ -29,6 +32,24 @@ class PreprocessingUseCase @Inject constructor(
         }
         val maxPower = frames.maxBy { frame -> frame.power }.power
 
+        val totalEnergy = frames.sumOf { it.power }
+        val averageEnergy = totalEnergy / frames.size
+        if (averageEnergy > threshold) {
+            Log.i("IS_NOISE", "Есть что-то кроме шума")
+            mainPreprocessing(
+                frames = frames,
+                maxPower = maxPower
+            )
+        } else {
+            Log.i("IS_NOISE", "Шум: $averageEnergy")
+            frames.map { it.copy(isNoise = true) }
+        }
+    }
+
+    private suspend fun mainPreprocessing(
+        frames: List<Frame>,
+        maxPower: Double
+    ): List<Frame> {
         val clusters = nMeansMethodUseCase(
             frames = frames,
             k = 3
@@ -36,7 +57,7 @@ class PreprocessingUseCase @Inject constructor(
 
         val noiseCluster = clusters.minByOrNull { cluster ->
             cluster.centroid
-        } ?: return@withContext emptyList<Frame>()
+        } ?: return emptyList()
 
         /*
         Нужно удалить последний кластер с шумом.
@@ -50,10 +71,10 @@ class PreprocessingUseCase @Inject constructor(
 
         val framesWithAnyNoise = neymanPearsonUseCase(
             frames = noiseCluster.points,
-            b = 2.0
+            b = 1.7
         )
 
-        buildList {
+        return buildList {
             addAll(clustersWithoutNoise.flatMap { cluster -> cluster.points })
             addAll(framesWithAnyNoise)
         }

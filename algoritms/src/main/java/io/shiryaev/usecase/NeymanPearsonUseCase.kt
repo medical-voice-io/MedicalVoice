@@ -1,5 +1,6 @@
 package io.shiryaev.usecase
 
+import android.util.Log
 import io.shiryaev.method.Frame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,6 +36,7 @@ class NeymanPearsonUseCase @Inject constructor() {
         // val noiseFrames = mutableListOf<Frame>()
         // val secondFrames = mutableListOf<Frame>()
 
+        Log.i("TRESHOLD", "Порог: $threshold")
         frames.map { frame ->
             frame.copy(
                 isNoise = frame.power < threshold
