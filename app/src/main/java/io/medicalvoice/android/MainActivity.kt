@@ -21,10 +21,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -93,15 +93,10 @@ fun VoiceControllerView(
     configViewModel: ConfigViewModel
 ) {
     val isServiceRunning by viewModel.isServiceRunning.collectAsState()
-    val sampleRate by configViewModel.selectedSampleRate.observeAsState(
-        configViewModel.sampleRate.keys.first()
-    )
-    val encoding by configViewModel.selectedEncoding.observeAsState(
-        configViewModel.quantizationBitRates.keys.first()
-    )
-    val channelFormat by configViewModel.selectedChannelFormat.observeAsState(
-        configViewModel.channels.keys.first()
-    )
+    val sampleRate by configViewModel.selectedSampleRate.collectAsState()
+    val encoding by configViewModel.selectedEncoding.collectAsState()
+    val channelFormat by configViewModel.selectedChannelFormat.collectAsState()
+    val threshold by configViewModel.threshold.collectAsState()
 
     Column(
         modifier = Modifier
@@ -122,7 +117,8 @@ fun VoiceControllerView(
                 viewModel.startService(
                     sampleRate = sampleRate,
                     encoding = encoding,
-                    channelFormat = channelFormat
+                    channelFormat = channelFormat,
+                    threshold = threshold.toDoubleOrNull() ?: 1.0
                 )
             },
             onStopClick = viewModel::stopService
@@ -137,17 +133,22 @@ fun ConfigAudioRecorderView(
     isServiceRunning: Boolean
 ) {
     val scrollState = rememberScrollState()
-    val selectedSampleRate by viewModel.selectedSampleRate.observeAsState(
-        viewModel.sampleRate.keys.first()
-    )
-    val selectedEncoding by viewModel.selectedEncoding.observeAsState(
-        viewModel.quantizationBitRates.keys.first()
-    )
-    val selectedChannelFormat by viewModel.selectedChannelFormat.observeAsState(
-        viewModel.channels.keys.first()
-    )
+    val selectedSampleRate by viewModel.selectedSampleRate.collectAsState()
+    val selectedEncoding by viewModel.selectedEncoding.collectAsState()
+    val selectedChannelFormat by viewModel.selectedChannelFormat.collectAsState()
+    val threshold by viewModel.threshold.collectAsState()
 
     Column(modifier = modifier.verticalScroll(scrollState)) {
+        Spacer(modifier = Modifier.height(16.dp))
+        HeaderView(textRes = R.string.threshold_header)
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = threshold,
+            onValueChange = viewModel::onThresholdTextChange,
+            label = {
+                Text("Коэффициент порога")
+            }
+        )
         Spacer(modifier = Modifier.height(16.dp))
         HeaderView(textRes = R.string.sample_rate_header)
         Column {

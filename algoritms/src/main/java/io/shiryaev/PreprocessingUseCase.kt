@@ -9,8 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-private const val threshold = 200_000_000.0
-
 class PreprocessingUseCase @Inject constructor(
     private val getPowerUseCase: GetPowerUseCase,
     private val nMeansMethodUseCase: KmeansMethodUseCase,
@@ -19,11 +17,12 @@ class PreprocessingUseCase @Inject constructor(
 
     suspend operator fun invoke(
         countNumberForFft: Int,
-        amplitudes: List<Double>
+        amplitudes: ShortArray,
+        threshold: Double,
     ): List<Frame> = withContext(Dispatchers.Default) {
         val frames = getPowerUseCase(
             countNumberForFft = countNumberForFft,
-            amplitude = amplitudes
+            amplitude = amplitudes.normalize()
         ).mapIndexed { index, power ->
             Frame(
                 id = index,
@@ -81,8 +80,12 @@ class PreprocessingUseCase @Inject constructor(
             .sortedBy { frame -> frame.id }
             .map { frame ->
                 frame.copy(
-                    power = frame.power / maxPower
+                    power = frame.power
                 )
             }
+    }
+
+    private fun ShortArray.normalize(): List<Double> = map {
+        it / Short.MAX_VALUE.toDouble()
     }
 }

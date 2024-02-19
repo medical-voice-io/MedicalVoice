@@ -7,10 +7,12 @@ import java.io.Serializable
  *
  * @property sampleRate частота дискретизация
  * @property audioFormat разрядность квантования
- * @property channelConfig
+ * @property channelConfig Режим записи
+ * @property threshold Коэффициент для рассчета порога
  */
 class AudioRecorderConfig(
     val sampleRate: SampleRate,
     val audioFormat: AudioFormat,
-    val channelConfig: ChannelConfig
+    val channelConfig: ChannelConfig,
+    val threshold: Double
 ) : Serializable

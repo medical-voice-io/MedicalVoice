@@ -5,6 +5,7 @@
     <string name="stop_voice_service_text">Stop</string>
 
     <string name="config_title">Конфигурация</string>
+    <string name="threshold_header">Коэффициент порога</string>
     <string name="sample_rate_header">Частота дискретизации</string>
     <string name="encoding_header">Разрядность квантования</string>
     <string name="channel_header">Формат записи</string>

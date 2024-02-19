@@ -57,7 +57,8 @@ class AudioRecorderInteractor @Inject constructor(
                 .onEach { audioAmplitudes ->
                     val frames = preprocessingUseCase(
                         countNumberForFft = countNumberForFft,
-                        amplitudes = audioAmplitudes.map { it.toDouble() }
+                        amplitudes = audioAmplitudes,
+                        threshold = audioRecorderConfig.threshold
                     )
                     _audioBufferFlow.emit(frames)
                 }

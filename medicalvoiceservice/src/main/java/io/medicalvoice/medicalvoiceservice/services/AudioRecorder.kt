@@ -10,7 +10,6 @@ import io.medicalvoice.medicalvoiceservice.services.events.Event
 import io.medicalvoice.medicalvoiceservice.services.events.StartRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.events.StopRecordingEvent
 import io.medicalvoice.medicalvoiceservice.services.exceptions.CreateAudioRecordException
-import io.medicalvoice.medicalvoiceservice.usecase.GetCountNumberForFft
 import io.medicalvoice.medicalvoiceservice.utils.retry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,9 +24,7 @@ import kotlin.coroutines.CoroutineContext
  * Класс для работы с AudioRecord.
  * Может запускать и останавливать запись аудио с микрофона
  */
-class AudioRecorder @Inject constructor(
-    private val getCountNumberForFft: GetCountNumberForFft,
-) : CoroutineScope {
+class AudioRecorder @Inject constructor() : CoroutineScope {
     override val coroutineContext: CoroutineContext = AudioRecordDispatcher + Job()
 
     // private var bufferSize: Int = 0

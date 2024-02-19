@@ -85,12 +85,14 @@ class VoiceViewModel @Inject constructor(
     fun startService(
         sampleRate: Int,
         encoding: Int,
-        channelFormat: Int
+        channelFormat: Int,
+        threshold: Double,
     ) = with(getApplication<Application>().applicationContext) {
         val audioConfig = AudioRecorderConfig(
             sampleRate = SampleRate(value = sampleRate),
             audioFormat = AudioFormat(value = encoding),
-            channelConfig = ChannelConfig(value = channelFormat)
+            channelConfig = ChannelConfig(value = channelFormat),
+            threshold = threshold,
         )
         val bundleData = bundleOf(VoiceService.CONFIG_KEY to audioConfig)
         startService<VoiceService>(bundle = bundleData)

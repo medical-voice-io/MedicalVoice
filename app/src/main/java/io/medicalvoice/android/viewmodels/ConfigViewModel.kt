@@ -3,11 +3,12 @@ package io.medicalvoice.android.viewmodels
 import android.app.Application
 import android.media.AudioFormat
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import io.medicalvoice.android.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * ViewModel для управления конфигурацией AudioRecord
@@ -17,11 +18,11 @@ class ConfigViewModel(
 ) : AndroidViewModel(application), CoroutineScope by MainScope() {
 
     private val _sampleRates = mapOf(
-        44100 to R.string.sample_rate_44100,
-        22050 to R.string.sample_rate_22050,
-        16000 to R.string.sample_rate_16000,
+        8000 to R.string.sample_rate_8000,
         11025 to R.string.sample_rate_11025,
-        8000 to R.string.sample_rate_8000
+        16000 to R.string.sample_rate_16000,
+        22050 to R.string.sample_rate_22050,
+        44100 to R.string.sample_rate_44100,
     )
     val sampleRate = _sampleRates
 
@@ -34,19 +35,22 @@ class ConfigViewModel(
     val quantizationBitRates = _quantizationBitRates
 
     private val _channels = mapOf(
-        AudioFormat.CHANNEL_IN_STEREO to R.string.channel_stereo,
-        AudioFormat.CHANNEL_IN_MONO to R.string.channel_mono
+        AudioFormat.CHANNEL_IN_MONO to R.string.channel_mono,
+        // AudioFormat.CHANNEL_IN_STEREO to R.string.channel_stereo
     )
     val channels = _channels
 
-    private val _selectedSampleRate = MutableLiveData(_sampleRates.keys.first())
-    val selectedSampleRate: LiveData<Int> = _selectedSampleRate
+    private val _selectedSampleRate = MutableStateFlow(_sampleRates.keys.first())
+    val selectedSampleRate: StateFlow<Int> = _selectedSampleRate
 
-    private val _selectedEncoding = MutableLiveData(_quantizationBitRates.keys.first())
-    val selectedEncoding: LiveData<Int> = _selectedEncoding
+    private val _selectedEncoding = MutableStateFlow(_quantizationBitRates.keys.first())
+    val selectedEncoding: StateFlow<Int> = _selectedEncoding
 
-    private val _selectedChannelFormat = MutableLiveData(_channels.keys.first())
-    val selectedChannelFormat: LiveData<Int> = _selectedChannelFormat
+    private val _selectedChannelFormat = MutableStateFlow(_channels.keys.first())
+    val selectedChannelFormat: StateFlow<Int> = _selectedChannelFormat
+
+    private val _threshold = MutableStateFlow("0.0")
+    val threshold: StateFlow<String> = _threshold.asStateFlow()
 
     fun selectSampleRate(sampleRate: Int) {
         _selectedSampleRate.value = sampleRate
@@ -58,5 +62,9 @@ class ConfigViewModel(
 
     fun selectChannelFormat(channelFormat: Int) {
         _selectedChannelFormat.value = channelFormat
+    }
+
+    fun onThresholdTextChange(thresholdText: String) {
+        _threshold.value = thresholdText
     }
 }
